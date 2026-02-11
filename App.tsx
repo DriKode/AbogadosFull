@@ -43,8 +43,9 @@ const SplashScreen: React.FC = () => {
         </div>
       </div>
 
-      <div className="absolute bottom-12 text-white/30 text-[10px] font-bold tracking-widest uppercase">
-        Sistema de Gestión Jurídica Integral v2.5
+      <div className="absolute bottom-12 flex flex-col items-center gap-2 text-white/30 text-[10px] font-bold tracking-widest uppercase text-center">
+        <p>Sistema de Gestión Jurídica Integral V 1.0</p>
+        <p>© Drix | Todos los derechos reservados 2026</p>
       </div>
     </div>
   );
