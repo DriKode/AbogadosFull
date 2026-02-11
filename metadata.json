@@ -1,0 +1,7 @@
+{
+  "name": "Bufete - Gestión Jurídica Profesional",
+  "description": "Sistema integral de gestión para despachos de abogados con administración de clientes, expedientes, cronogramas de actuación y generación de reportes.",
+  "requestFramePermissions": [
+    "camera"
+  ]
+}
