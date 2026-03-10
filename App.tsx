@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { Gavel } from 'lucide-react';
+import { Gavel, Phone, Mail, MapPin, ExternalLink } from 'lucide-react';
 import Layout from './components/Layout';
 import Dashboard from './pages/Dashboard';
 import Clients from './pages/Clients';
@@ -12,41 +12,106 @@ import { Cliente, Cita, Actuacion, CaseStatus } from './types';
 
 const SplashScreen: React.FC = () => {
   return (
-    <div className="fixed inset-0 z-[9999] bg-[#002B5B] flex flex-col items-center justify-center overflow-hidden">
-      {/* Elementos decorativos de fondo */}
-      <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-white/5 rounded-full blur-3xl animate-pulse"></div>
-      <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-[#8E735B]/10 rounded-full blur-3xl animate-pulse delay-700"></div>
+    <div className="fixed inset-0 z-[9999] bg-[#001f3f] flex flex-col items-center justify-center overflow-hidden font-sans">
+      {/* Fondo Premium */}
+      <div className="absolute inset-0 bg-gradient-to-br from-[#001f3f] via-[#002B5B] to-[#001f3f]"></div>
+      <div className="absolute top-[-20%] left-[-10%] w-[60%] h-[60%] bg-[#C5A059]/5 rounded-full blur-[120px] animate-pulse"></div>
+      <div className="absolute bottom-[-20%] right-[-10%] w-[60%] h-[60%] bg-[#C5A059]/10 rounded-full blur-[120px] animate-pulse delay-1000"></div>
 
-      <div className="relative flex flex-col items-center animate-in fade-in zoom-in duration-1000">
-        <div className="mb-8 transform transition-transform duration-500 animate-float">
-          <img
-            src="/logo.png"
-            alt="Logo Bufete"
-            className="w-40 h-40 object-contain filter drop-shadow-[0_0_20px_rgba(142,115,91,0.3)]"
-          />
+      <div className="relative flex flex-col items-center max-w-2xl w-full px-6 text-center animate-in fade-in zoom-in duration-1000">
+        {/* Logo y Nombre Principal */}
+        <div className="mb-10 transform scale-110">
+          <div className="relative">
+            <div className="absolute inset-0 bg-[#C5A059] blur-2xl opacity-20 animate-pulse"></div>
+            <img
+              src="/logo.png"
+              alt="Logo"
+              className="w-32 h-32 object-contain relative z-10 filter brightness-110 drop-shadow-[0_0_15px_rgba(197,160,89,0.4)]"
+            />
+          </div>
         </div>
 
-        <h1 className="text-5xl font-serif font-bold text-white tracking-tighter mb-4">
-          BUFETE
-        </h1>
+        <div className="space-y-4 mb-12">
+          <h1 className="text-4xl md:text-5xl font-serif font-bold text-white tracking-tight">
+            KATHERINE GALLARDO ORTIZ
+          </h1>
+          <div className="flex items-center justify-center gap-4">
+            <div className="h-[1px] w-12 bg-gradient-to-r from-transparent to-[#C5A059]"></div>
+            <p className="text-[#C5A059] font-medium tracking-[0.4em] uppercase text-base">
+              Abogada
+            </p>
+            <div className="h-[1px] w-12 bg-gradient-to-l from-transparent to-[#C5A059]"></div>
+          </div>
+        </div>
 
-        <div className="h-0.5 w-16 bg-[#8E735B] mb-6"></div>
+        {/* Tarjeta de Contacto y Ubicación */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full mb-12">
+          <div className="bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl p-6 transition-all hover:bg-white/10 group">
+            <div className="flex flex-col gap-4 text-left">
+              <div className="flex items-center gap-4">
+                <div className="w-10 h-10 rounded-full bg-[#C5A059]/20 flex items-center justify-center text-[#C5A059]">
+                  <Phone size={18} />
+                </div>
+                <div>
+                  <p className="text-white/40 text-xs uppercase tracking-widest font-bold">WhatsApp</p>
+                  <p className="text-white font-medium">65504849</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-4">
+                <div className="w-10 h-10 rounded-full bg-[#C5A059]/20 flex items-center justify-center text-[#C5A059]">
+                  <Mail size={18} />
+                </div>
+                <div className="overflow-hidden">
+                  <p className="text-white/40 text-xs uppercase tracking-widest font-bold">Email</p>
+                  <p className="text-white font-medium truncate">katherinegallardoortiz@gmail.com</p>
+                </div>
+              </div>
+            </div>
+          </div>
 
-        <p className="text-[#8E735B] font-medium tracking-[0.2em] uppercase text-sm animate-pulse">
-          Justicia · Ética · Resultados
-        </p>
+          <a
+            href="https://www.google.com/maps/place//@-17.385796,-66.154379,17z/data=!4m6!1m5!3m4!2zMTfCsDIzJzA4LjkiUyA2NsKwMDknMTUuOCJX!8m2!3d-17.385796!4d-66.154379?entry=ttu&g_ep=EgoyMDI2MDMwOC4wIKXMDSoASAFQAw%3D%3D"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl p-6 transition-all hover:bg-white/10 group"
+          >
+            <div className="h-full flex flex-col justify-between">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-[#C5A059]/20 flex items-center justify-center text-[#C5A059]">
+                    <MapPin size={18} />
+                  </div>
+                  <p className="text-white/40 text-xs uppercase tracking-widest font-bold">Ubicación</p>
+                </div>
+                <ExternalLink size={16} className="text-white/20 group-hover:text-[#C5A059] transition-colors" />
+              </div>
+              <p className="text-white text-sm leading-relaxed text-left flex-grow">
+                Av. Salamanca entre Antezana y Lanza<br />
+                <span className="text-[#C5A059]">Edif. Sisteco Piso 7 Of. 7</span>
+              </p>
+            </div>
+          </a>
+        </div>
 
-        <div className="mt-12 flex gap-1.5">
-          <div className="w-2 h-2 bg-white/20 rounded-full animate-bounce [animation-delay:-0.3s]"></div>
-          <div className="w-2 h-2 bg-white/40 rounded-full animate-bounce [animation-delay:-0.15s]"></div>
-          <div className="w-2 h-2 bg-white/60 rounded-full animate-bounce"></div>
+        {/* Barra de progreso elegante */}
+        <div className="w-64 h-[1px] bg-white/10 relative overflow-hidden">
+          <div className="absolute inset-0 bg-[#C5A059] animate-loading-bar"></div>
         </div>
       </div>
 
-      <div className="absolute bottom-12 flex flex-col items-center gap-2 text-white/30 text-[10px] font-bold tracking-widest uppercase text-center">
-        <p>Sistema de Gestión Jurídica Integral V 1.0</p>
-        <p>© Drix | Todos los derechos reservados 2026</p>
+      <div className="absolute bottom-8 text-white/20 text-[10px] font-bold tracking-[0.2em] uppercase">
+        <p>Excelencia Jurídica & Profesionalismo</p>
       </div>
+
+      <style>{`
+        @keyframes loading-bar {
+          0% { transform: translateX(-100%); }
+          100% { transform: translateX(100%); }
+        }
+        .animate-loading-bar {
+          animation: loading-bar 7s linear forwards;
+        }
+      `}</style>
     </div>
   );
 };
@@ -73,10 +138,10 @@ const App: React.FC = () => {
   };
 
   useEffect(() => {
-    // Timer para el Splash Screen (5 segundos)
+    // Timer para el Splash Screen (7 segundos por requerimiento)
     const splashTimer = setTimeout(() => {
       setShowSplash(false);
-    }, 5000);
+    }, 7000);
 
     const init = async () => {
       setLoading(true);

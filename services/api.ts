@@ -2,13 +2,38 @@
 import { Cliente, Cita, Actuacion, CaseStatus } from '../types';
 import { mockClientes, mockCitas } from './mockData';
 
-// Base de datos simulada en memoria (Persistente durante la sesión)
-let db_clientes = [...mockClientes];
-let db_citas = [...mockCitas];
+// Claves para el almacenamiento local
+const STORAGE_KEYS = {
+  CLIENTES: 'bufete_clientes_db',
+  CITAS: 'bufete_citas_db'
+};
+
+// Función auxiliar para cargar datos desde localStorage con fallback
+const loadFromStorage = <T>(key: string, defaultValue: T): T => {
+  try {
+    const stored = localStorage.getItem(key);
+    return stored ? JSON.parse(stored) : defaultValue;
+  } catch (error) {
+    console.error(`Error cargando ${key} desde localStorage:`, error);
+    return defaultValue;
+  }
+};
+
+// Función auxiliar para persistir datos en localStorage
+const saveToStorage = (key: string, data: any) => {
+  try {
+    localStorage.setItem(key, JSON.stringify(data));
+  } catch (error) {
+    console.error(`Error guardando ${key} en localStorage:`, error);
+  }
+};
+
+// Inicialización de la "base de datos" local
+let db_clientes: Cliente[] = loadFromStorage(STORAGE_KEYS.CLIENTES, [...mockClientes]);
+let db_citas: Cita[] = loadFromStorage(STORAGE_KEYS.CITAS, [...mockCitas]);
 
 export const api = {
   getClients: async (): Promise<Cliente[]> => {
-    // Retornamos una copia para evitar mutaciones directas externas
     return new Promise((res) => setTimeout(() => res([...db_clientes]), 100));
   },
 
@@ -23,7 +48,6 @@ export const api = {
       throw new Error("El DNI es un campo obligatorio.");
     }
 
-    // Verificación de duplicación por DNI (Case Insensitive + Trim)
     const exists = db_clientes.some(c => 
       c.dni.trim().toUpperCase() === normalizedDni
     );
@@ -46,6 +70,7 @@ export const api = {
     };
     
     db_clientes.push(newClient);
+    saveToStorage(STORAGE_KEYS.CLIENTES, db_clientes);
     return newClient;
   },
 
@@ -53,6 +78,7 @@ export const api = {
     const index = db_clientes.findIndex(c => c.id === clientId);
     if (index !== -1) {
       db_clientes[index] = { ...db_clientes[index], estadoActual: newStatus };
+      saveToStorage(STORAGE_KEYS.CLIENTES, db_clientes);
     }
   },
 
@@ -61,12 +87,11 @@ export const api = {
       throw new Error("Datos de cita incompletos.");
     }
 
-    // Validación crítica para evitar duplicidad de citas (Mismo cliente en mismo bloque horario)
     const isDuplicate = db_citas.some(c => 
       c.clienteId === citaData.clienteId && 
       c.fecha === citaData.fecha && 
       c.hora === citaData.hora &&
-      !c.atendida // Solo validamos duplicidad en citas pendientes
+      !c.atendida
     );
 
     if (isDuplicate) {
@@ -85,6 +110,7 @@ export const api = {
     };
     
     db_citas.push(newCita);
+    saveToStorage(STORAGE_KEYS.CITAS, db_citas);
     console.log(`[EvolutionAPI] Confirmación WhatsApp enviada a ${newCita.clienteNombre}`);
     
     return newCita;
@@ -110,11 +136,13 @@ export const api = {
       client.actuaciones.unshift(newAct);
       client.estadoActual = newAct.estadoCaso;
 
-      // AL REALIZAR LA ATENCIÓN: La tarjeta de cita desaparece y se marca como atendida
       const pendingAppointment = db_citas.find(c => c.clienteId === clientId && !c.atendida);
       if (pendingAppointment) {
         pendingAppointment.atendida = true;
       }
+      
+      saveToStorage(STORAGE_KEYS.CLIENTES, db_clientes);
+      saveToStorage(STORAGE_KEYS.CITAS, db_citas);
     }
   }
 };
