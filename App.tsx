@@ -20,50 +20,50 @@ const SplashScreen: React.FC = () => {
 
       <div className="relative flex flex-col items-center max-w-2xl w-full px-6 text-center animate-in fade-in zoom-in duration-1000">
         {/* Logo y Nombre Principal */}
-        <div className="mb-10 transform scale-110">
+        <div className="mb-6 md:mb-10 transform scale-90 md:scale-110">
           <div className="relative">
             <div className="absolute inset-0 bg-[#C5A059] blur-2xl opacity-20 animate-pulse"></div>
             <img
               src="/logo.png"
               alt="Logo"
-              className="w-32 h-32 object-contain relative z-10 filter brightness-110 drop-shadow-[0_0_15px_rgba(197,160,89,0.4)]"
+              className="w-24 h-24 md:w-32 md:h-32 object-contain relative z-10 filter brightness-110 drop-shadow-[0_0_15px_rgba(197,160,89,0.4)]"
             />
           </div>
         </div>
 
-        <div className="space-y-4 mb-12">
-          <h1 className="text-4xl md:text-5xl font-serif font-bold text-white tracking-tight">
+        <div className="space-y-2 md:space-y-4 mb-8 md:mb-12">
+          <h1 className="text-2xl sm:text-3xl md:text-5xl font-serif font-bold text-white tracking-tight leading-tight">
             KATHERINE GALLARDO ORTIZ
           </h1>
-          <div className="flex items-center justify-center gap-4">
-            <div className="h-[1px] w-12 bg-gradient-to-r from-transparent to-[#C5A059]"></div>
-            <p className="text-[#C5A059] font-medium tracking-[0.4em] uppercase text-base">
+          <div className="flex items-center justify-center gap-2 md:gap-4">
+            <div className="h-[1px] w-8 md:w-12 bg-gradient-to-r from-transparent to-[#C5A059]"></div>
+            <p className="text-[#C5A059] font-medium tracking-[0.2em] md:tracking-[0.4em] uppercase text-xs md:text-base px-2">
               Abogada
             </p>
-            <div className="h-[1px] w-12 bg-gradient-to-l from-transparent to-[#C5A059]"></div>
+            <div className="h-[1px] w-8 md:w-12 bg-gradient-to-l from-transparent to-[#C5A059]"></div>
           </div>
         </div>
 
         {/* Tarjeta de Contacto y Ubicación */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full mb-12">
-          <div className="bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl p-6 transition-all hover:bg-white/10 group">
-            <div className="flex flex-col gap-4 text-left">
-              <div className="flex items-center gap-4">
-                <div className="w-10 h-10 rounded-full bg-[#C5A059]/20 flex items-center justify-center text-[#C5A059]">
-                  <Phone size={18} />
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 w-full mb-8 md:mb-12">
+          <div className="bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl p-4 md:p-6 transition-all hover:bg-white/10 group">
+            <div className="flex flex-col gap-3 md:gap-4 text-left">
+              <div className="flex items-center gap-3 md:gap-4">
+                <div className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-[#C5A059]/20 flex items-center justify-center text-[#C5A059]">
+                  <Phone size={16} className="md:w-[18px] md:h-[18px]" />
                 </div>
                 <div>
-                  <p className="text-white/40 text-xs uppercase tracking-widest font-bold">WhatsApp</p>
-                  <p className="text-white font-medium">65504849</p>
+                  <p className="text-white/40 text-[10px] md:text-xs uppercase tracking-widest font-bold">WhatsApp</p>
+                  <p className="text-white font-medium text-sm md:text-base">65504849</p>
                 </div>
               </div>
-              <div className="flex items-center gap-4">
-                <div className="w-10 h-10 rounded-full bg-[#C5A059]/20 flex items-center justify-center text-[#C5A059]">
-                  <Mail size={18} />
+              <div className="flex items-center gap-3 md:gap-4">
+                <div className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-[#C5A059]/20 flex items-center justify-center text-[#C5A059]">
+                  <Mail size={16} className="md:w-[18px] md:h-[18px]" />
                 </div>
                 <div className="overflow-hidden">
-                  <p className="text-white/40 text-xs uppercase tracking-widest font-bold">Email</p>
-                  <p className="text-white font-medium truncate">katherinegallardoortiz@gmail.com</p>
+                  <p className="text-white/40 text-[10px] md:text-xs uppercase tracking-widest font-bold">Email</p>
+                  <p className="text-white font-medium truncate text-sm md:text-base">katherinegallardoortiz@gmail.com</p>
                 </div>
               </div>
             </div>
@@ -73,7 +73,7 @@ const SplashScreen: React.FC = () => {
             href="https://www.google.com/maps/place//@-17.385796,-66.154379,17z/data=!4m6!1m5!3m4!2zMTfCsDIzJzA4LjkiUyA2NsKwMDknMTUuOCJX!8m2!3d-17.385796!4d-66.154379?entry=ttu&g_ep=EgoyMDI2MDMwOC4wIKXMDSoASAFQAw%3D%3D"
             target="_blank"
             rel="noopener noreferrer"
-            className="bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl p-6 transition-all hover:bg-white/10 group"
+            className="bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl p-4 md:p-6 transition-all hover:bg-white/10 group"
           >
             <div className="h-full flex flex-col justify-between">
               <div className="flex items-center justify-between mb-4">

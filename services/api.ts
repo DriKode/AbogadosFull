@@ -6,12 +6,14 @@ const API_URL = 'http://localhost:3001/api';
 export const api = {
   getClients: async (): Promise<Cliente[]> => {
     const res = await fetch(`${API_URL}/clients`);
+    if (!res.ok) throw new Error("Error al obtener clientes");
     return res.json();
   },
 
   getClientById: async (id: string): Promise<Cliente | undefined> => {
     const res = await fetch(`${API_URL}/clients/${id}`);
     if (res.status === 404) return undefined;
+    if (!res.ok) throw new Error("Error al obtener cliente");
     return res.json();
   },
 
@@ -90,6 +92,7 @@ export const api = {
 
   getAppointments: async (): Promise<Cita[]> => {
     const res = await fetch(`${API_URL}/appointments`);
+    if (!res.ok) throw new Error("Error al obtener citas");
     return res.json();
   },
 
