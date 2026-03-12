@@ -1,16 +1,18 @@
 
-import React, { useState } from 'react';
-import { ArrowLeft, Clock, FileText, Plus, CheckCircle, AlertCircle, FilePlus, ChevronDown } from 'lucide-react';
+import React, { useState, useRef } from 'react';
+import { ArrowLeft, Clock, FileText, Plus, CheckCircle, AlertCircle, FilePlus, ChevronDown, Trash2 } from 'lucide-react';
 import { Cliente, CaseStatus, Actuacion } from '../types';
+import { api } from '../services/api';
 
 interface ClientDetailProps {
   cliente: Cliente;
   onBack: () => void;
   onAddActuacion: (clientId: string, data: Partial<Actuacion>) => void;
   onUpdateStatus: (clientId: string, status: CaseStatus) => void;
+  onDocumentUploaded?: () => void;
 }
 
-const ClientDetail: React.FC<ClientDetailProps> = ({ cliente, onBack, onAddActuacion, onUpdateStatus }) => {
+const ClientDetail: React.FC<ClientDetailProps> = ({ cliente, onBack, onAddActuacion, onUpdateStatus, onDocumentUploaded }) => {
   const [showAddLog, setShowAddLog] = useState(false);
   const [logForm, setLogForm] = useState<Partial<Actuacion>>({
     tipoProceso: '',
@@ -19,6 +21,65 @@ const ClientDetail: React.FC<ClientDetailProps> = ({ cliente, onBack, onAddActua
     observaciones: '',
     proximasAcciones: ''
   });
+
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [isUploading, setIsUploading] = useState(false);
+  const [isDeleting, setIsDeleting] = useState<string | null>(null);
+
+  const handleUploadClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    // Validar en frontend también
+    const allowedTypes = ['application/pdf', 'image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+    if (!allowedTypes.includes(file.type)) {
+      alert("Tipo de archivo no permitido. Solo PDF e Imágenes (JPG, PNG, WEBP).");
+      if (fileInputRef.current) fileInputRef.current.value = '';
+      return;
+    }
+
+    setIsUploading(true);
+    try {
+      await api.uploadDocument(cliente.id, file);
+      if (onDocumentUploaded) {
+        onDocumentUploaded();
+      }
+    } catch (e: any) {
+      alert(e.message || "Error al subir el documento");
+    } finally {
+      setIsUploading(false);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    }
+  };
+
+  const handleDeleteDocument = async (e: React.MouseEvent, doc: any) => {
+    e.stopPropagation(); // Avoid triggering the row click
+
+    // Confirmación de seguridad
+    const isConfirmed = window.confirm("¿Desea eliminar este documento? Esta acción no se puede deshacer.");
+    if (!isConfirmed) return;
+
+    const docId = doc.id_documento || doc.id;
+    const isActuacion = !doc.id_documento; // Si no tiene id_documento es del esquema antiguo (Actuaciones)
+
+    setIsDeleting(docId);
+    try {
+      await api.deleteDocument(cliente.id, docId, isActuacion);
+      if (onDocumentUploaded) {
+        onDocumentUploaded(); // Refrescar UI (re-usa el prop de callback superior)
+      }
+    } catch (err: any) {
+      alert(err.message || 'Error al eliminar el documento');
+    } finally {
+      setIsDeleting(null);
+    }
+  };
 
   const handleSubmitLog = (e: React.FormEvent) => {
     e.preventDefault();
@@ -33,11 +94,16 @@ const ClientDetail: React.FC<ClientDetailProps> = ({ cliente, onBack, onAddActua
     });
   };
 
+  const allDocs = [
+    ...cliente.actuaciones.flatMap(a => a.documentos),
+    ...(cliente.documentosLegales || [])
+  ];
+
   return (
     <div className="space-y-8 pb-12">
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <button 
+        <button
           onClick={onBack}
           className="flex items-center gap-2 text-slate-500 hover:text-[#002B5B] font-medium transition-colors"
         >
@@ -45,7 +111,7 @@ const ClientDetail: React.FC<ClientDetailProps> = ({ cliente, onBack, onAddActua
           Volver al listado
         </button>
         <div className="flex gap-2">
-           <button 
+          <button
             onClick={() => setShowAddLog(true)}
             className="bg-[#002B5B] text-white px-4 py-2 rounded-xl text-sm font-bold flex items-center gap-2 hover:bg-[#003d82] shadow-sm"
           >
@@ -58,7 +124,7 @@ const ClientDetail: React.FC<ClientDetailProps> = ({ cliente, onBack, onAddActua
       {/* Hero Section */}
       <div className="bg-[#002B5B] rounded-3xl p-8 text-white shadow-xl relative overflow-hidden">
         <div className="absolute top-0 right-0 p-12 opacity-10 pointer-events-none">
-           <FileText size={160} />
+          <FileText size={160} />
         </div>
         <div className="relative z-10 flex flex-col md:flex-row justify-between gap-8">
           <div className="space-y-4">
@@ -79,7 +145,7 @@ const ClientDetail: React.FC<ClientDetailProps> = ({ cliente, onBack, onAddActua
           <div className="flex flex-col justify-end text-right space-y-2">
             <p className="text-white/60 text-sm font-medium">Estado Procesal</p>
             <div className="relative inline-block text-left">
-              <select 
+              <select
                 value={cliente.estadoActual}
                 onChange={(e) => onUpdateStatus(cliente.id, e.target.value as CaseStatus)}
                 className="bg-white/10 border border-white/20 text-white font-bold py-2 px-4 rounded-xl cursor-pointer hover:bg-white/20 transition-all outline-none appearance-none pr-10"
@@ -113,7 +179,7 @@ const ClientDetail: React.FC<ClientDetailProps> = ({ cliente, onBack, onAddActua
                   <div className="absolute left-0 top-1 w-10 h-10 bg-white border-2 border-[#002B5B] rounded-full flex items-center justify-center z-10 shadow-sm">
                     <CheckCircle size={20} className="text-[#002B5B]" />
                   </div>
-                  
+
                   <div className="bg-white rounded-2xl p-6 border border-slate-100 shadow-sm hover:shadow-md transition-shadow">
                     <div className="flex justify-between items-start mb-4">
                       <div>
@@ -124,7 +190,7 @@ const ClientDetail: React.FC<ClientDetailProps> = ({ cliente, onBack, onAddActua
                         {act.estadoCaso}
                       </span>
                     </div>
-                    
+
                     <div className="space-y-4">
                       <div className="p-3 bg-slate-50 rounded-xl border-l-4 border-[#002B5B]">
                         <p className="text-sm font-bold text-slate-700 mb-1">Glosas Jurídicas:</p>
@@ -142,15 +208,15 @@ const ClientDetail: React.FC<ClientDetailProps> = ({ cliente, onBack, onAddActua
                       </div>
                       {act.documentos.length > 0 && (
                         <div className="pt-4 border-t border-slate-100">
-                           <p className="text-xs font-bold text-slate-400 uppercase mb-3">Adjuntos ({act.documentos.length})</p>
-                           <div className="flex flex-wrap gap-2">
-                             {act.documentos.map(doc => (
-                               <a key={doc.id} href={doc.url} className="flex items-center gap-2 px-3 py-2 bg-slate-100 rounded-lg hover:bg-slate-200 transition-colors">
-                                 <FileText size={16} className="text-slate-500" />
-                                 <span className="text-xs font-medium text-slate-700">{doc.nombre}</span>
-                               </a>
-                             ))}
-                           </div>
+                          <p className="text-xs font-bold text-slate-400 uppercase mb-3">Adjuntos ({act.documentos.length})</p>
+                          <div className="flex flex-wrap gap-2">
+                            {act.documentos.map(doc => (
+                              <a key={doc.id} href={doc.url} className="flex items-center gap-2 px-3 py-2 bg-slate-100 rounded-lg hover:bg-slate-200 transition-colors">
+                                <FileText size={16} className="text-slate-500" />
+                                <span className="text-xs font-medium text-slate-700">{doc.nombre}</span>
+                              </a>
+                            ))}
+                          </div>
                         </div>
                       )}
                     </div>
@@ -163,7 +229,7 @@ const ClientDetail: React.FC<ClientDetailProps> = ({ cliente, onBack, onAddActua
                   <AlertCircle size={48} className="text-slate-300" />
                 </div>
                 <p className="text-slate-500 font-medium">Aún no se han registrado actuaciones legales para este cliente.</p>
-                <button 
+                <button
                   onClick={() => setShowAddLog(true)}
                   className="text-[#8E735B] font-bold underline"
                 >
@@ -191,23 +257,53 @@ const ClientDetail: React.FC<ClientDetailProps> = ({ cliente, onBack, onAddActua
           <div className="bg-white rounded-2xl p-6 border border-slate-100 shadow-sm">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-lg font-bold text-slate-800">Repositorio Legal</h3>
-              <button className="text-[#8E735B] hover:bg-slate-50 p-1 rounded-md transition-colors">
-                 <FilePlus size={20} />
+              <input
+                type="file"
+                ref={fileInputRef}
+                className="hidden"
+                accept="application/pdf,image/jpeg,image/png,image/webp"
+                onChange={handleFileChange}
+              />
+              <button
+                onClick={handleUploadClick}
+                disabled={isUploading}
+                title="Subir documento"
+                className="text-[#8E735B] hover:bg-slate-50 p-1 rounded-md transition-colors disabled:opacity-50"
+              >
+                {isUploading ? <div className="h-5 w-5 rounded-full border-2 border-[#8E735B] border-t-transparent animate-spin"></div> : <FilePlus size={20} />}
               </button>
             </div>
             <div className="space-y-3">
-              {cliente.actuaciones.flatMap(a => a.documentos).length > 0 ? (
-                cliente.actuaciones.flatMap(a => a.documentos).map(doc => (
-                  <div key={doc.id} className="flex items-center justify-between p-3 border border-slate-100 rounded-xl hover:bg-slate-50 transition-all cursor-pointer group">
-                    <div className="flex items-center gap-3">
-                      <div className="p-2 bg-slate-100 rounded-lg group-hover:bg-[#002B5B]/10 transition-colors">
+              {allDocs.length > 0 ? (
+                allDocs.map((doc: any) => (
+                  <div key={doc.id || doc.id_documento} className="flex items-center justify-between p-3 border border-slate-100 rounded-xl hover:bg-slate-50 transition-all cursor-pointer group"
+                    onClick={() => {
+                      if (doc.url || doc.ruta_archivo) window.open(doc.url || doc.ruta_archivo, '_blank');
+                    }}
+                  >
+                    <div className="flex items-center gap-3 w-full pr-2">
+                      <div className="p-2 bg-slate-100 rounded-lg group-hover:bg-[#002B5B]/10 transition-colors shrink-0">
                         <FileText size={18} className="text-slate-500 group-hover:text-[#002B5B]" />
                       </div>
-                      <div>
-                        <p className="text-xs font-bold text-slate-800 line-clamp-1">{doc.nombre}</p>
-                        <p className="text-[10px] text-slate-400 uppercase font-medium">{doc.fechaSubida} · {doc.tamanio}</p>
+                      <div className="truncate flex-1">
+                        <p className="text-xs font-bold text-slate-800 truncate" title={doc.nombre || doc.nombre_archivo}>{doc.nombre || doc.nombre_archivo}</p>
+                        <p className="text-[10px] text-slate-400 uppercase font-medium mt-0.5">{doc.fechaSubida || doc.fecha_subida} · {doc.tamanio || (doc.tipo_archivo && doc.tipo_archivo.split('/')[1].toUpperCase())}</p>
                       </div>
                     </div>
+
+                    {/* Delete Button */}
+                    <button
+                      onClick={(e) => handleDeleteDocument(e, doc)}
+                      disabled={isDeleting === (doc.id_documento || doc.id)}
+                      className="p-2 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors opacity-0 group-hover:opacity-100 disabled:opacity-50 shrink-0"
+                      title="Eliminar documento"
+                    >
+                      {isDeleting === (doc.id_documento || doc.id) ? (
+                        <div className="h-4 w-4 rounded-full border-2 border-red-500 border-t-transparent animate-spin"></div>
+                      ) : (
+                        <Trash2 size={16} />
+                      )}
+                    </button>
                   </div>
                 ))
               ) : (
@@ -229,25 +325,25 @@ const ClientDetail: React.FC<ClientDetailProps> = ({ cliente, onBack, onAddActua
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
                   <label className="text-sm font-bold text-slate-700">Tipo de Proceso</label>
-                  <input required placeholder="Ej: Contestación de demanda" className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none" value={logForm.tipoProceso} onChange={(e) => setLogForm({...logForm, tipoProceso: e.target.value})} />
+                  <input required placeholder="Ej: Contestación de demanda" className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none" value={logForm.tipoProceso} onChange={(e) => setLogForm({ ...logForm, tipoProceso: e.target.value })} />
                 </div>
                 <div className="space-y-2">
                   <label className="text-sm font-bold text-slate-700">Estado del Caso</label>
-                  <select className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none" value={logForm.estadoCaso} onChange={(e) => setLogForm({...logForm, estadoCaso: e.target.value as CaseStatus})}>
+                  <select className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none" value={logForm.estadoCaso} onChange={(e) => setLogForm({ ...logForm, estadoCaso: e.target.value as CaseStatus })}>
                     {Object.values(CaseStatus).map(s => <option key={s} value={s}>{s}</option>)}
                   </select>
                 </div>
                 <div className="md:col-span-2 space-y-2">
                   <label className="text-sm font-bold text-slate-700">Glosas Jurídicas</label>
-                  <textarea required rows={2} placeholder="Resumen jurídico técnico..." className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none resize-none" value={logForm.glosasJuridicas} onChange={(e) => setLogForm({...logForm, glosasJuridicas: e.target.value})} />
+                  <textarea required rows={2} placeholder="Resumen jurídico técnico..." className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none resize-none" value={logForm.glosasJuridicas} onChange={(e) => setLogForm({ ...logForm, glosasJuridicas: e.target.value })} />
                 </div>
                 <div className="md:col-span-2 space-y-2">
                   <label className="text-sm font-bold text-slate-700">Observaciones Detalladas</label>
-                  <textarea rows={3} className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none resize-none" value={logForm.observaciones} onChange={(e) => setLogForm({...logForm, observaciones: e.target.value})} />
+                  <textarea rows={3} className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none resize-none" value={logForm.observaciones} onChange={(e) => setLogForm({ ...logForm, observaciones: e.target.value })} />
                 </div>
                 <div className="md:col-span-2 space-y-2">
                   <label className="text-sm font-bold text-slate-700">Próximas Acciones</label>
-                  <input className="w-full px-4 py-2.5 bg-amber-50 border border-amber-200 rounded-xl outline-none text-amber-900" placeholder="¿Cuál es el siguiente paso legal?" value={logForm.proximasAcciones} onChange={(e) => setLogForm({...logForm, proximasAcciones: e.target.value})} />
+                  <input className="w-full px-4 py-2.5 bg-amber-50 border border-amber-200 rounded-xl outline-none text-amber-900" placeholder="¿Cuál es el siguiente paso legal?" value={logForm.proximasAcciones} onChange={(e) => setLogForm({ ...logForm, proximasAcciones: e.target.value })} />
                 </div>
               </div>
               <div className="flex gap-4 pt-4">

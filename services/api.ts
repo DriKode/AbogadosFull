@@ -118,5 +118,47 @@ export const api = {
       const error = await res.json();
       throw new Error(error.error || "Error al añadir actuación");
     }
+  },
+
+  uploadDocument: async (clientId: string, file: File): Promise<void> => {
+    const formData = new FormData();
+    formData.append('archivo', file);
+
+    const res = await fetch(`${API_URL}/clients/${clientId}/documentos`, {
+      method: 'POST',
+      body: formData
+    });
+
+    if (!res.ok) {
+      let errorMsg = "Error al subir documento";
+      const clonedRes = res.clone();
+      try {
+        const error = await res.json();
+        errorMsg = error.error || errorMsg;
+      } catch (e) {
+        const textError = await clonedRes.text();
+        console.error("Respuesta no-JSON del servidor:", textError);
+        errorMsg = textError.includes('<html') ? "El servidor devolvió una página HTML. Es necesario reiniciar el backend." : "Error desconocido al procesar la respuesta del servidor.";
+      }
+      throw new Error(errorMsg);
+    }
+  },
+
+  deleteDocument: async (clientId: string, documentId: string, isActuacion: boolean = false): Promise<void> => {
+    const url = `${API_URL}/clients/${clientId}/documentos/${documentId}${isActuacion ? '?type=actuacion' : ''}`;
+    const res = await fetch(url, {
+      method: 'DELETE'
+    });
+
+    if (!res.ok) {
+      let errorMsg = "Error al eliminar documento";
+      try {
+        const error = await res.json();
+        errorMsg = error.error || errorMsg;
+      } catch (e) {
+        // Fallback
+      }
+      throw new Error(errorMsg);
+    }
   }
 };

@@ -27,6 +27,16 @@ export interface Documento {
   tamanio: string;
 }
 
+export interface DocumentoLegal {
+  id_documento: string;
+  cliente_id: string;
+  nombre_archivo: string;
+  tipo_archivo: string;
+  ruta_archivo: string;
+  fecha_subida: string;
+  usuario_que_subio?: string;
+}
+
 export interface Actuacion {
   id: string;
   fecha: string;
@@ -49,6 +59,7 @@ export interface Cliente {
   fechaRegistro: string;
   estadoActual: CaseStatus;
   actuaciones: Actuacion[];
+  documentosLegales?: DocumentoLegal[];
 }
 
 export interface Cita {

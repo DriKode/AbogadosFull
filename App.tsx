@@ -201,6 +201,7 @@ const App: React.FC = () => {
             onBack={() => setSelectedClientId(null)}
             onAddActuacion={handleAddActuacion}
             onUpdateStatus={handleUpdateClientStatus}
+            onDocumentUploaded={refreshData}
           />
         );
       }
