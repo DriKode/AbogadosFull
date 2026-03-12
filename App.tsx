@@ -99,8 +99,9 @@ const SplashScreen: React.FC = () => {
         </div>
       </div>
 
-      <div className="absolute bottom-8 text-white/20 text-[10px] font-bold tracking-[0.2em] uppercase">
+      <div className="absolute bottom-8 text-white/20 text-[10px] font-bold tracking-[0.2em] uppercase w-full text-center">
         <p>Excelencia Jurídica & Profesionalismo</p>
+        <p className="mt-1">ver. 1.0</p>
       </div>
 
       <style>{`

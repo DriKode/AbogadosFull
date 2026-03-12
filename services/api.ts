@@ -1,7 +1,7 @@
 
 import { Cliente, Cita, Actuacion, CaseStatus } from '../types';
 
-const API_URL = 'http://localhost:3001/api';
+const API_URL = import.meta.env.PROD ? '/api' : 'http://localhost:3001/api';
 
 export const api = {
   getClients: async (): Promise<Cliente[]> => {

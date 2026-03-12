@@ -212,6 +212,10 @@ app.post('/api/clients/:id/actuaciones', async (req, res) => {
     }
 });
 
-app.listen(port, () => {
-    console.log(`Backend con Turso/SQLite corriendo en puerto ${port}`);
-});
+if (process.env.NODE_ENV !== 'production') {
+    app.listen(port, () => {
+        console.log(`Backend con Turso/SQLite corriendo en puerto ${port}`);
+    });
+}
+
+export default app;
