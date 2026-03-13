@@ -7,23 +7,29 @@ interface LayoutProps {
   children: React.ReactNode;
   activeTab: string;
   setActiveTab: (tab: string) => void;
+  role: 'ABOGADO' | 'APOYO' | null;
+  onLogout: () => void;
 }
 
-const Layout: React.FC<LayoutProps> = ({ children, activeTab, setActiveTab }) => {
+const Layout: React.FC<LayoutProps> = ({ children, activeTab, setActiveTab, role, onLogout }) => {
   const [isSidebarOpen, setSidebarOpen] = useState(false);
 
-  const navItems = [
+  let navItems = [
     { id: 'dashboard', label: 'Panel Principal', icon: Home },
     { id: 'clientes', label: 'Clientes', icon: Users },
     { id: 'citas', label: 'Citas', icon: Calendar },
     { id: 'reportes', label: 'Informes', icon: PieChart },
   ];
 
+  if (role === 'APOYO') {
+    navItems = navItems.filter(item => item.id === 'clientes' || item.id === 'citas');
+  }
+
   return (
     <div className="flex h-screen bg-slate-50 overflow-hidden">
       {/* Mobile Sidebar Overlay */}
       {isSidebarOpen && (
-        <div 
+        <div
           className="fixed inset-0 bg-black/50 z-40 md:hidden"
           onClick={() => setSidebarOpen(false)}
         />
@@ -39,9 +45,9 @@ const Layout: React.FC<LayoutProps> = ({ children, activeTab, setActiveTab }) =>
           {/* Logo Section */}
           <div className="p-6 flex items-center gap-3 border-b border-white/10">
             <div className="flex-shrink-0">
-              <img 
-                src="/logo.png" 
-                alt="Logo" 
+              <img
+                src="/logo.png"
+                alt="Logo"
                 className="w-10 h-10 object-contain"
               />
             </div>
@@ -62,8 +68,8 @@ const Layout: React.FC<LayoutProps> = ({ children, activeTab, setActiveTab }) =>
                   }}
                   className={`
                     w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all
-                    ${isActive 
-                      ? 'bg-white/10 text-white shadow-sm ring-1 ring-white/20' 
+                    ${isActive
+                      ? 'bg-white/10 text-white shadow-sm ring-1 ring-white/20'
                       : 'text-slate-300 hover:bg-white/5 hover:text-white'}
                   `}
                 >
@@ -74,7 +80,22 @@ const Layout: React.FC<LayoutProps> = ({ children, activeTab, setActiveTab }) =>
             })}
           </nav>
 
-          {/* User Profile Footer - Removed as requested */}
+          {/* User Profile Footer / Logout */}
+          <div className="p-4 border-t border-white/10 mt-auto">
+            <div className="flex items-center justify-between">
+              <div className="flex flex-col">
+                <span className="text-sm font-medium">{role === 'APOYO' ? 'Apoyo Administrativo' : 'Abogado Principal'}</span>
+                <span className="text-xs text-white/50 capitalize">{role?.toLowerCase()}</span>
+              </div>
+              <button
+                onClick={onLogout}
+                className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center text-white/70 hover:bg-white/10 hover:text-white transition-all"
+                title="Cerrar Sesión"
+              >
+                <LogOut size={18} />
+              </button>
+            </div>
+          </div>
         </div>
       </aside>
 
@@ -82,13 +103,13 @@ const Layout: React.FC<LayoutProps> = ({ children, activeTab, setActiveTab }) =>
       <main className="flex-1 flex flex-col min-w-0 overflow-hidden">
         {/* Top Header */}
         <header className="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-4 md:px-8">
-          <button 
+          <button
             className="md:hidden p-2 text-slate-600"
             onClick={() => setSidebarOpen(true)}
           >
             <Menu size={24} />
           </button>
-          
+
           <div className="flex-1 text-center md:text-left">
             <h2 className="text-lg font-semibold text-slate-800 capitalize">
               {navItems.find(i => i.id === activeTab)?.label || 'Detalles'}
