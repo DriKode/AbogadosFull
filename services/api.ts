@@ -105,7 +105,12 @@ export const api = {
       glosasJuridicas: actuacion.glosasJuridicas || '',
       observaciones: actuacion.observaciones || '',
       proximasAcciones: actuacion.proximasAcciones || '',
-      documentos: actuacion.documentos || []
+      documentos: actuacion.documentos || [],
+      nurej: actuacion.nurej || '',
+      juzgado: actuacion.juzgado || '',
+      fechaInicioDemanda: actuacion.fechaInicioDemanda || '',
+      demandante: actuacion.demandante || '',
+      demandado: actuacion.demandado || ''
     };
 
     const res = await fetch(`${API_URL}/clients/${clientId}/actuaciones`, {

@@ -5,12 +5,15 @@ import { Download, PieChart as PieIcon, BarChart3, TrendingUp, Users, Clock } fr
 import { Cliente, CaseStatus } from '../types';
 import { CAUSA_TYPES, THEME } from '../constants';
 
+import ClientReportModal from '../components/ClientReportModal';
+
 interface ReportsProps {
   clientes: Cliente[];
 }
 
 const Reports: React.FC<ReportsProps> = ({ clientes }) => {
   const [animate, setAnimate] = useState(false);
+  const [selectedClientForReport, setSelectedClientForReport] = useState<Cliente | null>(null);
 
   useEffect(() => {
     const timer = setTimeout(() => setAnimate(true), 100);
@@ -18,10 +21,26 @@ const Reports: React.FC<ReportsProps> = ({ clientes }) => {
   }, []);
 
   const exportIndividual = (c: Cliente) => {
-    alert(`Generando Reporte Individual para ${c.nombreCompleto}...\nEstructura: Perfil + Historial de Actuaciones + Documentos.`);
+    setSelectedClientForReport(c);
   };
 
-  // Procesamiento de datos para los gráficos
+  // Funciones de utilidad para fechas
+  const parseDate = (dateStr: string) => {
+    if (!dateStr) return new Date();
+    if (dateStr.includes('-')) {
+      return new Date(dateStr); // YYYY-MM-DD
+    } else if (dateStr.includes('/')) {
+      const parts = dateStr.split('/');
+      if (parts.length === 3) {
+        // DD/MM/YYYY
+        return new Date(parseInt(parts[2]), parseInt(parts[1]) - 1, parseInt(parts[0]));
+      }
+    }
+    return new Date(dateStr);
+  };
+
+  // ---- CÁLCULOS DINÁMICOS PARA TARJETAS METRICAS ----
+
   const statusCounts = {
     [CaseStatus.ACTIVO]: clientes.filter(c => c.estadoActual === CaseStatus.ACTIVO).length,
     [CaseStatus.CERRADO]: clientes.filter(c => c.estadoActual === CaseStatus.CERRADO).length,
@@ -35,17 +54,58 @@ const Reports: React.FC<ReportsProps> = ({ clientes }) => {
   })).filter(item => item.count > 0);
 
   const totalClients = clientes.length || 1;
+  const hasData = clientes.length > 0;
+
+  // 1. Efectividad
+  const closedCases = statusCounts[CaseStatus.CERRADO] || 0;
+  const activeCases = statusCounts[CaseStatus.ACTIVO] || 0;
+  const totalActionable = closedCases + activeCases;
+  const effectiveness = totalActionable > 0 ? Math.round((closedCases / totalActionable) * 100) : 0;
+
+  // 2. Atención Promedio (Ciclo de 1ra actuación)
+  let totalDelayDays = 0;
+  let casesWithActions = 0;
+
+  clientes.forEach(cliente => {
+    if (cliente.actuaciones && cliente.actuaciones.length > 0 && cliente.fechaRegistro) {
+      const regDate = parseDate(cliente.fechaRegistro);
+
+      const firstActionDate = cliente.actuaciones.reduce((earliest, act) => {
+        const actDate = parseDate(act.fecha);
+        return actDate < earliest ? actDate : earliest;
+      }, parseDate(cliente.actuaciones[0].fecha));
+
+      const diffTime = firstActionDate.getTime() - regDate.getTime();
+      // Si la suma en días es >= 0 la tomamos
+      if (diffTime >= 0) {
+        const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+        totalDelayDays += diffDays;
+        casesWithActions++;
+      }
+    }
+  });
+  const avgAttentionTime = casesWithActions > 0 ? Math.round(totalDelayDays / casesWithActions) : 0;
+
+  // 3. Nuevos Clientes (últimos 30 días)
+  const thirtyDaysAgo = new Date();
+  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+  const newClientsCount = clientes.filter(c => {
+    if (!c.fechaRegistro) return false;
+    const regDate = parseDate(c.fechaRegistro);
+    return regDate >= thirtyDaysAgo;
+  }).length;
 
   // Componente de Gráfico de Barras Animado (Estado)
   const StatusBarChart = () => (
     <div className="space-y-4">
       {Object.entries(statusCounts).map(([status, count], index) => {
         const percentage = (count / totalClients) * 100;
-        const barColor = 
-          status === CaseStatus.ACTIVO ? '#3B82F6' : 
-          status === CaseStatus.CERRADO ? '#10B981' : 
-          status === CaseStatus.EN_ESPERA ? '#F59E0B' : '#64748B';
-        
+        const barColor =
+          status === CaseStatus.ACTIVO ? '#3B82F6' :
+            status === CaseStatus.CERRADO ? '#10B981' :
+              status === CaseStatus.EN_ESPERA ? '#F59E0B' : '#64748B';
+
         return (
           <div key={status} className="space-y-1">
             <div className="flex justify-between text-xs font-bold text-slate-600 uppercase">
@@ -53,9 +113,9 @@ const Reports: React.FC<ReportsProps> = ({ clientes }) => {
               <span>{count} ({Math.round(percentage)}%)</span>
             </div>
             <div className="h-2.5 w-full bg-slate-100 rounded-full overflow-hidden">
-              <div 
+              <div
                 className="h-full rounded-full transition-all duration-1000 ease-out"
-                style={{ 
+                style={{
                   width: animate ? `${percentage}%` : '0%',
                   backgroundColor: barColor,
                   transitionDelay: `${index * 150}ms`
@@ -135,47 +195,77 @@ const Reports: React.FC<ReportsProps> = ({ clientes }) => {
         </div>
       </div>
 
-      {/* Métricas Principales */}
+      {/* Métricas Principales Dinámicas */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="bg-white p-6 rounded-3xl shadow-sm border border-slate-100 group hover:shadow-md transition-all">
-           <div className="flex justify-between items-start mb-4">
-              <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Efectividad</p>
-              <TrendingUp size={16} className="text-emerald-500" />
-           </div>
-           <div className="flex items-baseline gap-2">
-             <p className="text-3xl font-bold text-slate-900">92%</p>
-             <span className="text-xs font-bold text-emerald-600">+4.1%</span>
-           </div>
-           <div className="mt-4 h-1.5 bg-slate-50 rounded-full overflow-hidden">
-             <div 
-               className="h-full bg-emerald-500 transition-all duration-1000" 
-               style={{ width: animate ? '92%' : '0%' }}
-             />
-           </div>
+
+        {/* Efectividad Card */}
+        <div className="bg-white p-6 rounded-3xl shadow-sm border border-slate-100 group hover:shadow-md transition-all relative overflow-hidden flex flex-col justify-between">
+          <div>
+            <div className="flex justify-between items-start mb-4">
+              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Efectividad</p>
+              <TrendingUp size={16} className={hasData ? (effectiveness >= 50 ? "text-emerald-500" : "text-amber-500") : "text-slate-300"} />
+            </div>
+            <div className="flex items-baseline gap-2">
+              <p className="text-3xl font-bold text-slate-900">{hasData ? `${effectiveness}%` : '--'}</p>
+              {hasData && (
+                <span className={`text-xs font-bold ${effectiveness >= 50 ? 'text-emerald-600' : 'text-amber-600'}`}>
+                  {effectiveness >= 50 ? 'Óptima' : 'Puede Mejorar'}
+                </span>
+              )}
+            </div>
+          </div>
+          <div className="mt-5 h-1.5 bg-slate-50 rounded-full overflow-hidden">
+            <div
+              className={`h-full transition-all duration-1000 ease-out ${effectiveness >= 50 ? 'bg-emerald-500' : 'bg-amber-500'}`}
+              style={{ width: animate && hasData ? `${effectiveness}%` : '0%' }}
+            />
+          </div>
         </div>
-        <div className="bg-white p-6 rounded-3xl shadow-sm border border-slate-100 group hover:shadow-md transition-all">
-           <div className="flex justify-between items-start mb-4">
-              <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Atención Promedio</p>
-              <Clock size={16} className="text-[#8E735B]" />
-           </div>
-           <p className="text-3xl font-bold text-slate-900">14 <span className="text-sm font-medium text-slate-400">días</span></p>
-           <p className="text-[10px] text-slate-400 mt-2 font-bold uppercase">Ciclo de 1ra actuación legal</p>
+
+        {/* Atención Promedio Card */}
+        <div className="bg-white p-6 rounded-3xl shadow-sm border border-slate-100 group hover:shadow-md transition-all flex flex-col justify-between">
+          <div>
+            <div className="flex justify-between items-start mb-4">
+              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Atención Promedio</p>
+              <Clock size={16} className={hasData ? "text-[#8E735B]" : "text-slate-300"} />
+            </div>
+            <p className="text-3xl font-bold text-slate-900">
+              {hasData ? avgAttentionTime : '--'}
+              {hasData && <span className="text-sm font-medium text-slate-400 ml-1">días</span>}
+            </p>
+          </div>
+          <p className="text-[9px] text-slate-400 mt-4 font-bold uppercase tracking-widest">Ciclo desde registro a 1ra actuación</p>
         </div>
-        <div className="bg-white p-6 rounded-3xl shadow-sm border border-slate-100 group hover:shadow-md transition-all">
-           <div className="flex justify-between items-start mb-4">
-              <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Nuevos Clientes</p>
-              <Users size={16} className="text-[#002B5B]" />
-           </div>
-           <p className="text-3xl font-bold text-slate-900">{clientes.length}</p>
-           <p className="text-[10px] text-slate-400 mt-2 font-bold uppercase">Registros en el periodo actual</p>
+
+        {/* Nuevos Clientes Card */}
+        <div className="bg-white p-6 rounded-3xl shadow-sm border border-slate-100 group hover:shadow-md transition-all flex flex-col justify-between">
+          <div>
+            <div className="flex justify-between items-start mb-4">
+              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Nuevos Ingresos</p>
+              <Users size={16} className={hasData ? "text-[#002B5B]" : "text-slate-300"} />
+            </div>
+            <p className="text-3xl font-bold text-slate-900">
+              {hasData ? newClientsCount : '--'}
+            </p>
+          </div>
+          <div className="mt-4 flex items-center justify-between">
+            <p className="text-[9px] text-slate-400 font-bold uppercase tracking-widest">Registros últimos 30 días</p>
+            {hasData && <span className="text-[10px] font-bold text-[#002B5B] bg-blue-50 px-2 py-0.5 rounded-md">Total: {clientes.length}</span>}
+          </div>
         </div>
-        <div className="bg-white p-6 rounded-3xl shadow-sm border border-slate-100 group hover:shadow-md transition-all">
-           <div className="flex justify-between items-start mb-4">
-              <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Casos Cerrados</p>
-              <BarChart3 size={16} className="text-slate-400" />
-           </div>
-           <p className="text-3xl font-bold text-slate-900">{statusCounts[CaseStatus.CERRADO]}</p>
-           <p className="text-[10px] text-slate-400 mt-2 font-bold uppercase">Finalizados con éxito</p>
+
+        {/* Casos Cerrados Card */}
+        <div className="bg-white p-6 rounded-3xl shadow-sm border border-slate-100 group hover:shadow-md transition-all flex flex-col justify-between">
+          <div>
+            <div className="flex justify-between items-start mb-4">
+              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Casos Exitosos</p>
+              <BarChart3 size={16} className={hasData ? "text-[#8E735B]" : "text-slate-300"} />
+            </div>
+            <p className="text-3xl font-bold text-slate-900">
+              {hasData ? closedCases : '--'}
+            </p>
+          </div>
+          <p className="text-[9px] text-slate-400 mt-4 font-bold uppercase tracking-widest">Expedientes finalizados legalmente</p>
         </div>
       </div>
 
@@ -189,39 +279,38 @@ const Reports: React.FC<ReportsProps> = ({ clientes }) => {
             <div className="overflow-x-auto">
               <table className="w-full text-left">
                 <thead className="bg-slate-50 border-b border-slate-100">
-                    <tr>
-                      <th className="px-6 py-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest">Identificación / Cliente</th>
-                      <th className="px-6 py-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest">Estado Procesal</th>
-                      <th className="px-6 py-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest text-right">Acción</th>
-                    </tr>
+                  <tr>
+                    <th className="px-6 py-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest">Identificación / Cliente</th>
+                    <th className="px-6 py-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest">Estado Procesal</th>
+                    <th className="px-6 py-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest text-right">Acción</th>
+                  </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
-                    {clientes.map(c => (
-                      <tr key={c.id} className="hover:bg-slate-50/50 group transition-all">
-                        <td className="px-6 py-4">
-                          <p className="text-sm font-bold text-slate-800 group-hover:text-[#002B5B] transition-colors">{c.nombreCompleto}</p>
-                          <p className="text-[10px] text-slate-400 font-bold uppercase tracking-tighter">{c.dni}</p>
-                        </td>
-                        <td className="px-6 py-4">
-                          <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider ${
-                            c.estadoActual === CaseStatus.ACTIVO ? 'bg-blue-50 text-blue-600 border border-blue-100' :
-                            c.estadoActual === CaseStatus.CERRADO ? 'bg-emerald-50 text-emerald-600 border border-emerald-100' :
+                  {clientes.map(c => (
+                    <tr key={c.id} className="hover:bg-slate-50/50 group transition-all">
+                      <td className="px-6 py-4">
+                        <p className="text-sm font-bold text-slate-800 group-hover:text-[#002B5B] transition-colors">{c.nombreCompleto}</p>
+                        <p className="text-[10px] text-slate-400 font-bold uppercase tracking-tighter">{c.dni}</p>
+                      </td>
+                      <td className="px-6 py-4">
+                        <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider ${c.estadoActual === CaseStatus.ACTIVO ? 'bg-blue-50 text-blue-600 border border-blue-100' :
+                          c.estadoActual === CaseStatus.CERRADO ? 'bg-emerald-50 text-emerald-600 border border-emerald-100' :
                             'bg-amber-50 text-amber-600 border border-amber-100'
                           }`}>
-                            {c.estadoActual}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4 text-right">
-                          <button 
-                              onClick={() => exportIndividual(c)}
-                              className="p-2 text-[#8E735B] hover:bg-white rounded-xl shadow-none hover:shadow-sm border border-transparent hover:border-slate-100 transition-all"
-                              title="Descargar PDF"
-                            >
-                            <Download size={18} />
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
+                          {c.estadoActual}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 text-right">
+                        <button
+                          onClick={() => exportIndividual(c)}
+                          className="p-2 text-[#8E735B] hover:bg-white rounded-xl shadow-none hover:shadow-sm border border-transparent hover:border-slate-100 transition-all"
+                          title="Descargar PDF"
+                        >
+                          <Download size={18} />
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
                 </tbody>
               </table>
             </div>
@@ -245,22 +334,15 @@ const Reports: React.FC<ReportsProps> = ({ clientes }) => {
             </div>
             <CausesDonutChart />
           </div>
-
-          <div className="bg-slate-900 p-6 rounded-3xl shadow-xl text-white space-y-4">
-            <h3 className="text-sm font-bold uppercase tracking-widest text-slate-400">Exportar Reportes Consolidados</h3>
-            <div className="space-y-2">
-              <button className="w-full py-3 bg-white/10 hover:bg-white/20 rounded-2xl flex items-center justify-between px-4 transition-all group">
-                <span className="text-sm font-bold">Estado de Cartera</span>
-                <Download size={16} className="text-slate-400 group-hover:text-white transition-colors" />
-              </button>
-              <button className="w-full py-3 bg-white/10 hover:bg-white/20 rounded-2xl flex items-center justify-between px-4 transition-all group">
-                <span className="text-sm font-bold">Productividad Mensual</span>
-                <Download size={16} className="text-slate-400 group-hover:text-white transition-colors" />
-              </button>
-            </div>
-          </div>
         </div>
       </div>
+
+      {selectedClientForReport && (
+        <ClientReportModal
+          cliente={selectedClientForReport}
+          onClose={() => setSelectedClientForReport(null)}
+        />
+      )}
     </div>
   );
 };

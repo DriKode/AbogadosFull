@@ -46,6 +46,11 @@ export interface Actuacion {
   observaciones: string;
   proximasAcciones: string;
   documentos: Documento[];
+  nurej?: string;
+  juzgado?: string;
+  fechaInicioDemanda?: string;
+  demandante?: string;
+  demandado?: string;
 }
 
 export interface Cliente {

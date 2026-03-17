@@ -55,7 +55,12 @@ CREATE TABLE actuaciones (
   glosasJuridicas TEXT,
   observaciones TEXT,
   proximasAcciones TEXT,
-  documentos JSONB
+  documentos JSONB,
+  nurej TEXT,
+  juzgado TEXT,
+  fecha_inicio_demanda DATE,
+  demandante TEXT,
+  demandado TEXT
 );
 CREATE TABLE citas (
   id TEXT PRIMARY KEY,
@@ -99,7 +104,10 @@ const toDBAct = (a, cId) => ({
     id: a.id, clienteid: cId, fecha: a.fecha, tipoproceso: a.tipoProceso,
     estadocaso: a.estadoCaso, glosasjuridicas: a.glosasJuridicas,
     observaciones: a.observaciones, proximasacciones: a.proximasAcciones,
-    documentos: a.documentos
+    documentos: a.documentos,
+    nurej: a.nurej, juzgado: a.juzgado,
+    fecha_inicio_demanda: a.fechaInicioDemanda,
+    demandante: a.demandante, demandado: a.demandado
 });
 
 const fromDBAct = (a) => ({
@@ -108,7 +116,12 @@ const fromDBAct = (a) => ({
     tipoProceso: a.tipoproceso || a.tipoProceso,
     estadoCaso: a.estadocaso || a.estadoCaso,
     glosasJuridicas: a.glosasjuridicas || a.glosasJuridicas,
-    proximasAcciones: a.proximasacciones || a.proximasAcciones
+    proximasAcciones: a.proximasacciones || a.proximasAcciones,
+    nurej: a.nurej,
+    juzgado: a.juzgado,
+    fechaInicioDemanda: a.fecha_inicio_demanda || a.fechaInicioDemanda || '',
+    demandante: a.demandante,
+    demandado: a.demandado
 });
 
 const toDBCita = (c) => ({

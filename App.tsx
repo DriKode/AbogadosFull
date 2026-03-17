@@ -223,7 +223,7 @@ const SplashScreen: React.FC<{ onClienteClick?: () => void; onAbogadoClick?: () 
 
         <div className="space-y-2 md:space-y-4 mb-8 md:mb-12">
           <h1 className="text-[20px] sm:text-[26px] md:text-[44px] font-serif font-bold text-white tracking-tight leading-tight">
-            KATHERINE GALLARDO ORTIZ
+            KATHERINE GALLARDO
           </h1>
           <div className="flex items-center justify-center gap-2 md:gap-4">
             <div className="h-[1px] w-8 md:w-12 bg-gradient-to-r from-transparent to-[#C5A059]"></div>

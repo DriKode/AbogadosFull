@@ -19,7 +19,12 @@ const ClientDetail: React.FC<ClientDetailProps> = ({ cliente, onBack, onAddActua
     estadoCaso: cliente.estadoActual,
     glosasJuridicas: '',
     observaciones: '',
-    proximasAcciones: ''
+    proximasAcciones: '',
+    nurej: '',
+    juzgado: '',
+    fechaInicioDemanda: '',
+    demandante: '',
+    demandado: ''
   });
 
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -81,17 +86,35 @@ const ClientDetail: React.FC<ClientDetailProps> = ({ cliente, onBack, onAddActua
     }
   };
 
-  const handleSubmitLog = (e: React.FormEvent) => {
+  const [isSubmittingActuacion, setIsSubmittingActuacion] = useState(false);
+
+  const handleSubmitLog = async (e: React.FormEvent) => {
     e.preventDefault();
-    onAddActuacion(cliente.id, logForm);
-    setShowAddLog(false);
-    setLogForm({
-      tipoProceso: '',
-      estadoCaso: cliente.estadoActual,
-      glosasJuridicas: '',
-      observaciones: '',
-      proximasAcciones: ''
-    });
+    const isConfirmed = window.confirm("¿Estás seguro de registrar esta actuación jurídica?");
+    if (!isConfirmed) return;
+
+    setIsSubmittingActuacion(true);
+    try {
+      await onAddActuacion(cliente.id, logForm);
+      setShowAddLog(false);
+      setLogForm({
+        tipoProceso: '',
+        estadoCaso: cliente.estadoActual,
+        glosasJuridicas: '',
+        observaciones: '',
+        proximasAcciones: '',
+        nurej: '',
+        juzgado: '',
+        fechaInicioDemanda: '',
+        demandante: '',
+        demandado: ''
+      });
+    } catch (error) {
+      console.error("Error al guardar la actuación:", error);
+      alert("Hubo un error al registrar la actuación. Por favor intenta de nuevo.");
+    } finally {
+      setIsSubmittingActuacion(false);
+    }
   };
 
   const allDocs = [
@@ -192,6 +215,38 @@ const ClientDetail: React.FC<ClientDetailProps> = ({ cliente, onBack, onAddActua
                     </div>
 
                     <div className="space-y-4">
+                      <div className="bg-slate-50/50 rounded-xl p-4 border border-slate-100 flex flex-col gap-3">
+                        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-3">
+                          <div>
+                            <span className="text-[10px] font-bold text-[#8E735B] uppercase tracking-wider block mb-1">NUREJ</span>
+                            <span className="text-sm font-bold text-[#002B5B] bg-white px-2.5 py-1 rounded-md border border-slate-200 shadow-sm">{act.nurej || 'Sin registrar'}</span>
+                          </div>
+                          <div className="sm:text-right">
+                            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">Juzgado e Inicio</span>
+                            <span className="text-sm font-medium text-slate-600 bg-white px-2.5 py-1 rounded-md border border-slate-100">
+                              {act.juzgado || '-'} • {act.fechaInicioDemanda || '-'}
+                            </span>
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-3 border-t border-slate-200/50">
+                          <div className="flex items-start gap-2">
+                            <div className="w-1.5 h-1.5 rounded-full bg-[#002B5B] mt-1.5 shrink-0"></div>
+                            <div>
+                              <span className="text-[10px] font-bold text-slate-400 uppercase block">Demandante</span>
+                              <span className="text-sm font-medium text-slate-700">{act.demandante || '-'}</span>
+                            </div>
+                          </div>
+                          <div className="flex items-start gap-2">
+                            <div className="w-1.5 h-1.5 rounded-full bg-[#8E735B] mt-1.5 shrink-0"></div>
+                            <div>
+                              <span className="text-[10px] font-bold text-slate-400 uppercase block">Demandado</span>
+                              <span className="text-sm font-medium text-slate-700">{act.demandado || '-'}</span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
                       <div className="p-3 bg-slate-50 rounded-xl border-l-4 border-[#002B5B]">
                         <p className="text-sm font-bold text-slate-700 mb-1">Glosas Jurídicas:</p>
                         <p className="text-sm text-slate-600 italic">"{act.glosasJuridicas}"</p>
@@ -315,8 +370,8 @@ const ClientDetail: React.FC<ClientDetailProps> = ({ cliente, onBack, onAddActua
       </div>
 
       {showAddLog && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-          <div className="bg-white w-full max-w-2xl rounded-3xl shadow-2xl overflow-hidden animate-in fade-in slide-in-from-bottom-8 duration-300">
+        <div className="fixed inset-0 z-[100] flex items-start justify-center p-4 bg-black/60 backdrop-blur-sm overflow-y-auto">
+          <div className="bg-white w-full max-w-2xl rounded-3xl shadow-2xl overflow-hidden animate-in fade-in slide-in-from-bottom-8 duration-300 my-8">
             <div className="bg-[#002B5B] p-6 text-white">
               <h3 className="text-xl font-serif font-bold">Nueva Actuación Jurídica</h3>
               <p className="text-white/70 text-sm">Registro cronológico de atención y documentos</p>
@@ -333,6 +388,26 @@ const ClientDetail: React.FC<ClientDetailProps> = ({ cliente, onBack, onAddActua
                     {Object.values(CaseStatus).map(s => <option key={s} value={s}>{s}</option>)}
                   </select>
                 </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-bold text-slate-700">Nurej</label>
+                  <input placeholder="Ej: 1234567" className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none" value={logForm.nurej} onChange={(e) => setLogForm({ ...logForm, nurej: e.target.value })} />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-bold text-slate-700">Juzgado</label>
+                  <input placeholder="Ej: Juzgado 1ro Civil" className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none" value={logForm.juzgado} onChange={(e) => setLogForm({ ...logForm, juzgado: e.target.value })} />
+                </div>
+                <div className="md:col-span-2 space-y-2">
+                  <label className="text-sm font-bold text-slate-700">Fecha inicio Demanda</label>
+                  <input type="date" className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none" value={logForm.fechaInicioDemanda} onChange={(e) => setLogForm({ ...logForm, fechaInicioDemanda: e.target.value })} />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-bold text-slate-700">Demandante</label>
+                  <input placeholder="Nombre del demandante" className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none" value={logForm.demandante} onChange={(e) => setLogForm({ ...logForm, demandante: e.target.value })} />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-bold text-slate-700">Demandado</label>
+                  <input placeholder="Nombre del demandado" className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none" value={logForm.demandado} onChange={(e) => setLogForm({ ...logForm, demandado: e.target.value })} />
+                </div>
                 <div className="md:col-span-2 space-y-2">
                   <label className="text-sm font-bold text-slate-700">Glosas Jurídicas</label>
                   <textarea required rows={2} placeholder="Resumen jurídico técnico..." className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none resize-none" value={logForm.glosasJuridicas} onChange={(e) => setLogForm({ ...logForm, glosasJuridicas: e.target.value })} />
@@ -347,8 +422,17 @@ const ClientDetail: React.FC<ClientDetailProps> = ({ cliente, onBack, onAddActua
                 </div>
               </div>
               <div className="flex gap-4 pt-4">
-                <button type="button" onClick={() => setShowAddLog(false)} className="flex-1 py-3 border border-slate-200 text-slate-600 font-bold rounded-xl hover:bg-slate-50">Cancelar</button>
-                <button type="submit" className="flex-1 py-3 bg-[#002B5B] text-white font-bold rounded-xl hover:bg-[#003d82] shadow-lg transition-all">Registrar Actuación</button>
+                <button type="button" onClick={() => setShowAddLog(false)} disabled={isSubmittingActuacion} className="flex-1 py-3 border border-slate-200 text-slate-600 font-bold rounded-xl hover:bg-slate-50 disabled:opacity-50">Cancelar</button>
+                <button type="submit" disabled={isSubmittingActuacion} className="flex-1 py-3 bg-[#002B5B] text-white font-bold rounded-xl hover:bg-[#003d82] shadow-lg transition-all flex items-center justify-center gap-2 disabled:opacity-50">
+                  {isSubmittingActuacion ? (
+                    <>
+                      <div className="h-5 w-5 rounded-full border-2 border-white border-t-transparent animate-spin"></div>
+                      Guardando...
+                    </>
+                  ) : (
+                    'Registrar Actuación'
+                  )}
+                </button>
               </div>
             </form>
           </div>
