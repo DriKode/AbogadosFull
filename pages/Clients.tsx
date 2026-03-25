@@ -162,11 +162,11 @@ const Clients: React.FC<ClientsProps> = ({ clientes, onViewDetails, onAddClient 
                 </div>
                 <div className="space-y-2">
                   <label className="text-sm font-bold text-slate-700">Teléfono (WhatsApp)</label>
-                  <input required type="tel" className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none" value={formData.whatsapp} onChange={(e) => setFormData({ ...formData, whatsapp: e.target.value })} />
+                  <input type="tel" className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none" value={formData.whatsapp} onChange={(e) => setFormData({ ...formData, whatsapp: e.target.value })} />
                 </div>
                 <div className="space-y-2">
                   <label className="text-sm font-bold text-slate-700">Correo Electrónico</label>
-                  <input required type="email" className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none" value={formData.email} onChange={(e) => setFormData({ ...formData, email: e.target.value })} />
+                  <input type="email" className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none" value={formData.email} onChange={(e) => setFormData({ ...formData, email: e.target.value })} />
                 </div>
                 <div className="space-y-2">
                   <label className="text-sm font-bold text-slate-700">Tipo de Causa</label>
